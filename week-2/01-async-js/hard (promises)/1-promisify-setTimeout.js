@@ -17,4 +17,4 @@ function wait(n) {
   console.log('Promise Made');
 }
 
-wait(1);
+module.exports = wait;
