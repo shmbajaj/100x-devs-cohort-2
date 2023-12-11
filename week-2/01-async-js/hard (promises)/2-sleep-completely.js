@@ -4,7 +4,26 @@
  * the function should return a promise just like before
  */
 
-function sleep(milliseconds) {
+function sleepify(seconds) {
+  console.log('Sleepify Constructed');
+  while (true) {
+    let condition = true;
+    function cb() {
+      condition = false;
+    }
+    if (!condition) {
+      break;
+    }
+    Promise.resolve(undefined).then(cb);
+    console.log('Sleepify Running');
+  }
 }
 
-module.exports = sleep;
+function sleep(seconds) {
+  console.log('Sleepify Started');
+  sleepify(seconds);
+  console.log('Sleepify Resolved');
+  console.log('Someother Work To be Done!!');
+}
+
+sleep(1);
