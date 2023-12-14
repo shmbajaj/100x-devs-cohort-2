@@ -4,7 +4,7 @@
 
 function promisfy(n) {
   return new Promise((resolve, _) => {
-    console.log('Promise Construcutor');
+    // console.log('Promise Construcutor');
     setTimeout(() => {
       resolve();
     }, n * 1000);
@@ -12,9 +12,10 @@ function promisfy(n) {
 }
 
 function wait(n) {
-  console.log('Promise Started');
-  promisfy(n).then(() => console.log('Promise Fullfilled'));
-  console.log('Promise Made');
+  // console.log('Promise Started');
+  return promisfy(n);
+  // console.log('Promise Fullfilled');
+  // console.log('Promise Made');
 }
 
 module.exports = wait;
