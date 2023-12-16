@@ -105,23 +105,23 @@ app.get('/todos', (_, response) => {
 app.get('/todos/:id', (request, response) => {
   const createdTodoId = request.params.id;
   const todo = todos.find((todo) => todo.id === createdTodoId);
-  if (!todo) return response.status(404).end();
+  if (!todo) return response.status(404).send();
   response.json(todo);
 });
 
 // TODO: Use strong uiid or unique id creation method
 app.post('/todos', (request, response) => {
   const payload = request.body;
-  const todo = { ...payload, id: `${Math.random()}` };
-  todos.push(todo);
-  response.status(201).json(todo);
+  const newTodo = { ...payload, id: `${Math.random()}` };
+  todos.push(newTodo);
+  response.status(201).json(newTodo);
 });
 
 // INFO: let's use mutation
 app.put('/todos/:id', (request, response) => {
   const toBeUpdatedTodoId = request.params.id;
   const index = todos.findIndex((todo) => todo.id === toBeUpdatedTodoId);
-  if (index < 0) return response.status(404).end();
+  if (index < 0) return response.status(404).send();
   const todo = todos.find((todo) => todo.id === toBeUpdatedTodoId);
   const payload = request.body;
   const updatedTodo = { ...todo, ...payload };
@@ -133,9 +133,13 @@ app.put('/todos/:id', (request, response) => {
 app.delete('/todos/:id', (request, response) => {
   const toBeDeletedodoId = request.params.id;
   const index = todos.findIndex((todo) => todo.id === toBeDeletedodoId);
-  if (index < 0) return response.status(404).end();
+  if (index < 0) return response.status(404).send();
   todos.splice(index, 1);
-  return response.status(200).end();
+  return response.status(200).send();
+});
+
+app.use((req, res, next) => {
+  res.status(404).send('Route Not Found');
 });
 
 /**

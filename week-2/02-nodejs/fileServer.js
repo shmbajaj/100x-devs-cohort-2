@@ -22,8 +22,9 @@ app.get('/', (_, response) => {
 });
 
 app.get('/files', (_, response) => {
-  fs.readdir('./files', function (err, files) {
-    if (err) return response.status(500).end();
+  fs.readdir(path.join(__dirname, './files/'), function (err, files) {
+    if (err)
+      return response.status(500).json({ error: 'Failed to retrieve files' });
     return response.json(files);
   });
 });
@@ -32,14 +33,15 @@ app.get('/files', (_, response) => {
 // files in context are not memory heavy
 app.get('/file/:fileName', (request, response) => {
   const fileName = request.params.fileName;
-  fs.readFile(`./files/${fileName}`, 'utf-8', function (err, data) {
+  const filePath = path.join(__dirname, './files/', fileName);
+  fs.readFile(filePath, 'utf-8', function (err, data) {
     if (err?.code === 'ENOENT' || err)
       return response.status(404).send('File not found');
     return response.status(200).send(data);
   });
 });
 
-app.get('*', (_, response) => {
+app.all('*', (_, response) => {
   return response.status(404).send('Route not found');
 });
 
