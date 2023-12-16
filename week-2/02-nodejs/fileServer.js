@@ -17,5 +17,30 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
+app.get('/', (_, response) => {
+  response.send('Hello From FileServer');
+});
+
+app.get('/files', (_, response) => {
+  fs.readdir('./files', function (err, files) {
+    if (err) return response.status(500).end();
+    return response.json(files);
+  });
+});
+
+// Not using fs.createReadStream as current
+// files in context are not memory heavy
+app.get('/file/:fileName', (request, response) => {
+  const fileName = request.params.fileName;
+  fs.readFile(`./files/${fileName}`, 'utf-8', function (err, data) {
+    if (err?.code === 'ENOENT' || err)
+      return response.status(404).send('File not found');
+    return response.status(200).send(data);
+  });
+});
+
+app.get('*', (_, response) => {
+  return response.status(404).send('Route not found');
+});
 
 module.exports = app;
