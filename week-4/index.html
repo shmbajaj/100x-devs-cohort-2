@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>React DOM Practice Assignment</title>
     <style>
       .none {
         display: none;
@@ -68,20 +70,39 @@
 
       const todos = document.getElementById('todos');
 
+      function deleteHandler(e) {
+        const parent = e.target.parentElement;
+        const id = parent.getAttribute('data-todoid');
+        const index = todoState.findIndex((t) => t.id === id);
+        todoState.splice(index, 1);
+        updateState(todoState);
+      }
+
+      function removeTodoFromDom(todo) {
+        document.querySelector(`[data-todoid="${todo.id}"]`).remove();
+      }
+
       function addTodoToDom(todo) {
         const todoContainer = document.createElement('article');
         const todoTitle = document.createElement('div');
         const todoDescription = document.createElement('p');
         const todoId = document.createElement('span');
+        const deleteTodo = document.createElement('button');
 
         todoId.classList.add('none');
         todoId.textContent = todo.id;
         todoDescription.textContent = todo.description;
         todoTitle.textContent = todo.title;
 
+        deleteTodo.textContent = 'Delete';
+        deleteTodo.addEventListener('click', deleteHandler);
+
         todoContainer.appendChild(todoId);
         todoContainer.appendChild(todoTitle);
         todoContainer.appendChild(todoDescription);
+        todoContainer.appendChild(deleteTodo);
+
+        todoContainer.setAttribute('data-todoid', todo.id);
 
         todos.prepend(todoContainer);
       }
@@ -95,14 +116,14 @@
         const newTodosIds = newTodos.map((t) => t.id);
         const oldTodosIds = oldTodoState.map((t) => t.id);
         const added = newTodos.filter((e) => !oldTodosIds.includes(e.id));
-        const deleted = [];
+        const deleted = oldTodoState.filter((e) => !newTodosIds.includes(e.id));
         const updated = [];
 
-        console.log({ newTodosIds, oldTodosIds, added });
-        addTodoToDom(added[0]);
         // calculate these 3 arrays
         // call addTodo, removeTodo, updateTodo functions on each of the
         // elements
+        added.forEach((t) => addTodoToDom(t));
+        deleted.forEach((t) => removeTodoFromDom(t));
         oldTodoState = newTodos.slice();
       }
 
