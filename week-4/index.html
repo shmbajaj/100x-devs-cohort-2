@@ -31,9 +31,59 @@
 
       const todos = document.getElementById('todos');
 
+      function updateState(newTodos) {
+        // calculate the diff b/w newTodos and oldTodos.
+        // More specifically, find out what todos are -
+        // 1. added
+        // 2. deleted
+        // 3. updated
+        const newTodosIds = newTodos.map((t) => t.id);
+        const oldTodosIds = oldTodoState.map((t) => t.id);
+        const addedIds = newTodosIds.filter((id) => !oldTodosIds.includes(id));
+        const deletedIds = oldTodosIds.filter(
+          (id) => !newTodosIds.includes(id)
+        );
+
+        // calculate these 3 arrays
+        // call addTodo, removeTodo, updateTodo functions on each of the
+        // elements
+        addedIds.forEach((id) => {
+          const addedTodo = newTodos.find((t) => t.id === id);
+          addTodoToDom(addedTodo);
+        });
+        deletedIds.forEach((id) => {
+          const deletedTodo = oldTodoState.find((t) => t.id === id);
+          removeTodoFromDom(deletedTodo);
+        });
+        //TODO: update following function from O(n^2)
+        newTodos.forEach((newTodo) => {
+          const oldTodo = oldTodoState.find((t) => t.id === newTodo.id);
+          if (!Object.is(oldTodo, newTodo)) {
+            updateTodoInDom(oldTodo, newTodo);
+          }
+        });
+        oldTodoState = newTodos.slice();
+      }
+
+      todos.addEventListener('click', (e) => {
+        //TODO: replace with more strong checks
+        if (!e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
+          return;
+        }
+        const todoContainer = e.target.closest('li');
+        const todoContent = todoContainer.querySelector(
+          '[data-todocontent=true]'
+        );
+        const todoEditForm = todoContainer.querySelector(
+          '[data-edittodo=true]'
+        );
+        todoContent.classList.add('none');
+        todoEditForm.classList.remove('none');
+      });
+
       function deleteHandler(e) {
         const parent = e.target.parentElement;
-        const id = +parent.getAttribute('data-todoid');
+        const id = parseInt(parent.dataset.todoid, 10);
         const index = todoState.findIndex((t) => t.id === id);
         todoState.splice(index, 1);
         updateState(todoState);
@@ -46,8 +96,7 @@
         const formData = new FormData(editForm);
         const title = formData.get('title');
         const description = formData.get('description');
-        const id = +parent.getAttribute('data-todoid');
-        // const id = formData.get('id');
+        const id = parseInt(parent.dataset.todoid, 10);
         const updatedTodo = { id, title, description };
         const index = todoState.findIndex((t) => t.id === updatedTodo.id);
         todoState[index] = updatedTodo;
@@ -64,22 +113,21 @@
         editForm.classList.remove('none');
       }
 
-      //TODO: refactor the following function
+      //TODO: use strong diffing method(deep-equality-check)
       function updateTodoInDom(oldTodo, newTodo) {
-        if (Object.is(oldTodo, newTodo)) {
-          return;
-        }
-        const areTitleSame = oldTodo.title === newTodo.title;
+        const areTitleSame = oldTodo.title === newTitle.title;
         const areDescriptionSame = oldTodo.description === newTodo.description;
         if (areTitleSame && areDescriptionSame) {
           return;
         }
         const todo = document.querySelector(`[data-todoid="${oldTodo.id}"]`);
         if (!areTitleSame) {
-          todo.children[2].children[0].textContent = newTodo.title;
+          todo.querySelector('[data-todo-title=true]').textContent =
+            newTodo.title;
         }
         if (!areDescriptionSame) {
-          todo.children[2].children[1].textContent = newTodo.description;
+          todo.querySelector('[data-todo-description=true]').textContent =
+            newTodo.description;
         }
       }
 
@@ -104,7 +152,9 @@
         todoId.classList.add('none');
         todoId.textContent = todo.id;
         todoDescription.textContent = todo.description;
+        todoDescription.dataset.todoDescription = true;
         todoTitle.textContent = todo.title;
+        todoTitle.dataset.todoTitle = true;
 
         idInput.setAttribute('name', 'id');
         idInput.setAttribute('type', 'hidden');
@@ -119,7 +169,8 @@
         descriptionInput.value = todo.description;
         saveTodo.textContent = 'Save';
 
-        editForm.classList.toggle('none');
+        editForm.classList.add('none');
+        editForm.dataset.edittodo = true;
         editForm.appendChild(titleInput);
         editForm.appendChild(descriptionInput);
         editForm.appendChild(saveTodo);
@@ -129,9 +180,10 @@
         deleteTodo.addEventListener('click', deleteHandler);
 
         editTodo.textContent = 'Edit';
-        editTodo.addEventListener('click', editHandler);
+        editTodo.dataset.edit = true;
 
-        todoContentContainer.setAttribute('data-todoid', todo.id);
+        todoContentContainer.dataset.todoid = todo.id;
+        todoContentContainer.dataset.todocontent = true;
         todoContentContainer.appendChild(todoTitle);
         todoContentContainer.appendChild(todoDescription);
 
@@ -140,36 +192,9 @@
         todoContainer.appendChild(todoContentContainer);
         todoContainer.appendChild(editTodo);
         todoContainer.appendChild(deleteTodo);
-
-        todoContainer.setAttribute('data-todoid', todo.id);
+        todoContainer.dataset.todoid = todo.id;
 
         todos.prepend(todoContainer);
-      }
-
-      function updateState(newTodos) {
-        // calculate the diff b/w newTodos and oldTodos.
-        // More specifically, find out what todos are -
-        // 1. added
-        // 2. deleted
-        // 3. updated
-        const newTodosIds = newTodos.map((t) => t.id);
-        const oldTodosIds = oldTodoState.map((t) => t.id);
-        const added = newTodos.filter((e) => !oldTodosIds.includes(e.id));
-        const deleted = oldTodoState.filter((e) => !newTodosIds.includes(e.id));
-        //TODO: update following function from O(n^2)
-        const updated = newTodos
-          .filter((e) => oldTodosIds.includes(e.id))
-          .map((newTodo) => {
-            const oldTodo = oldTodoState.find((o) => newTodo.id === o.id);
-            return [oldTodo, newTodo];
-          });
-        // calculate these 3 arrays
-        // call addTodo, removeTodo, updateTodo functions on each of the
-        // elements
-        added.forEach((t) => addTodoToDom(t));
-        deleted.forEach((t) => removeTodoFromDom(t));
-        updated.forEach((t) => updateTodoInDom(...t));
-        oldTodoState = newTodos.slice();
       }
 
       function addTodo({ title, description }) {
