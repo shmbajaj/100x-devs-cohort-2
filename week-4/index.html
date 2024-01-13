@@ -1,61 +1,225 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>React DOM Practice Assignment</title>
+    <style>
+      .none {
+        display: none;
+      }
+    </style>
+  </head>
 
-<head>
-  <script>
-    let globalId = 1;
-    let todoState = [];
-    let oldTodoState = [];
+  <body>
+    <form id="add-todo">
+      <input type="text" name="title" placeholder="Todo title" required />
+      <input
+        type="text"
+        name="description"
+        placeholder="Todo description"
+        required
+      />
+      <button type="submit">Add todo</button>
+    </form>
 
-    function addTodoToDom() {
-      
-    }
+    <ul id="todos"></ul>
+    <script>
+      let globalId = 1;
+      let todoState = [];
+      let oldTodoState = [];
 
-    function removeTodoFromDom(todo) {
-      
-    }
+      const todos = document.getElementById('todos');
 
-    function updateTodoInDom(oldTodo, newTodo) {
-        
-    }
+      function updateState(newTodos) {
+        // calculate the diff b/w newTodos and oldTodos.
+        // More specifically, find out what todos are -
+        // 1. added
+        // 2. deleted
+        // 3. updated
+        const newTodosIds = newTodos.map((t) => t.id);
+        const oldTodosIds = oldTodoState.map((t) => t.id);
+        const addedIds = newTodosIds.filter((id) => !oldTodosIds.includes(id));
+        const deletedIds = oldTodosIds.filter(
+          (id) => !newTodosIds.includes(id)
+        );
 
-    function updateState(newTodos) {
-      // calculate the diff b/w newTodos and oldTodos.
-      // More specifically, find out what todos are - 
-      // 1. added
-      // 2. deleted
-      // 3. updated
-      const added = [];
-      const deleted = [];
-      const updated = [];
-      // calculate these 3 arrays
-      // call addTodo, removeTodo, updateTodo functions on each of the
-      // elements
-      oldTodoState = newTodos;
-    }
+        // calculate these 3 arrays
+        // call addTodo, removeTodo, updateTodo functions on each of the
+        // elements
+        addedIds.forEach((id) => {
+          const addedTodo = newTodos.find((t) => t.id === id);
+          addTodoToDom(addedTodo);
+        });
+        deletedIds.forEach((id) => {
+          const deletedTodo = oldTodoState.find((t) => t.id === id);
+          removeTodoFromDom(deletedTodo);
+        });
+        //TODO: update following function from O(n^2)
+        newTodos.forEach((newTodo) => {
+          const oldTodo = oldTodoState.find((t) => t.id === newTodo.id);
+          if (!Object.is(oldTodo, newTodo)) {
+            updateTodoInDom(oldTodo, newTodo);
+          }
+        });
+        oldTodoState = newTodos.slice();
+      }
 
-    function addTodo() {
-      const title = document.getElementById("title").value;
-      const description = document.getElementById("description").value;
-      todoState.push({
-        title: title,
-        description: description,
-        id: globalId++,
-      })
-      updateState(todoState);
-    }
-  </script>
-</head>
+      todos.addEventListener('click', (e) => {
+        //TODO: replace with more strong checks
+        if (!e.target.tagName === 'BUTTON' && e.target.textContent === 'Edit') {
+          return;
+        }
+        const todoContainer = e.target.closest('li');
+        const todoContent = todoContainer.querySelector(
+          '[data-todocontent=true]'
+        );
+        const todoEditForm = todoContainer.querySelector(
+          '[data-edittodo=true]'
+        );
+        todoContent.classList.add('none');
+        todoEditForm.classList.remove('none');
+      });
 
-<body>
-  <input type="text" id="title" placeholder="Todo title"></input> <br /><br />
-  <input type="text" id="description" placeholder="Todo description"></input> <br /><br />
-  <button onclick="addTodo()">Add todo</button>
-  <br /> <br />
+      function deleteHandler(e) {
+        const parent = e.target.parentElement;
+        const id = parseInt(parent.dataset.todoid, 10);
+        const index = todoState.findIndex((t) => t.id === id);
+        todoState.splice(index, 1);
+        updateState(todoState);
+      }
 
-  <div id="todos">
+      function saveHandler(e) {
+        e.preventDefault();
+        const editForm = e.target;
+        const parent = editForm.parentElement;
+        const formData = new FormData(editForm);
+        const title = formData.get('title');
+        const description = formData.get('description');
+        const id = parseInt(parent.dataset.todoid, 10);
+        const updatedTodo = { id, title, description };
+        const index = todoState.findIndex((t) => t.id === updatedTodo.id);
+        todoState[index] = updatedTodo;
+        updateState(todoState);
+        editForm.nextSibling.classList.remove('none');
+        editForm.classList.add('none');
+      }
 
-  </div>
-</body>
+      function editHandler(e) {
+        const node = e.target;
+        const todoContentContainer = node.previousElementSibling;
+        const editForm = todoContentContainer.previousElementSibling;
+        todoContentContainer.classList.add('none');
+        editForm.classList.remove('none');
+      }
 
+      //TODO: use strong diffing method(deep-equality-check)
+      function updateTodoInDom(oldTodo, newTodo) {
+        const areTitleSame = oldTodo.title === newTitle.title;
+        const areDescriptionSame = oldTodo.description === newTodo.description;
+        if (areTitleSame && areDescriptionSame) {
+          return;
+        }
+        const todo = document.querySelector(`[data-todoid="${oldTodo.id}"]`);
+        if (!areTitleSame) {
+          todo.querySelector('[data-todo-title=true]').textContent =
+            newTodo.title;
+        }
+        if (!areDescriptionSame) {
+          todo.querySelector('[data-todo-description=true]').textContent =
+            newTodo.description;
+        }
+      }
+
+      function removeTodoFromDom(todo) {
+        document.querySelector(`[data-todoid="${todo.id}"]`).remove();
+      }
+
+      function addTodoToDom(todo) {
+        const todoContainer = document.createElement('li');
+        const todoContentContainer = document.createElement('div');
+        const todoId = document.createElement('span');
+        const todoTitle = document.createElement('div');
+        const todoDescription = document.createElement('p');
+        const editForm = document.createElement('form');
+        const idInput = document.createElement('input');
+        const titleInput = document.createElement('input');
+        const descriptionInput = document.createElement('input');
+        const deleteTodo = document.createElement('button');
+        const editTodo = document.createElement('button');
+        const saveTodo = document.createElement('button');
+
+        todoId.classList.add('none');
+        todoId.textContent = todo.id;
+        todoDescription.textContent = todo.description;
+        todoDescription.dataset.todoDescription = true;
+        todoTitle.textContent = todo.title;
+        todoTitle.dataset.todoTitle = true;
+
+        idInput.setAttribute('name', 'id');
+        idInput.setAttribute('type', 'hidden');
+        idInput.value = todo.id;
+        titleInput.setAttribute('name', 'title');
+        titleInput.setAttribute('type', 'text');
+        titleInput.setAttribute('required', true);
+        titleInput.value = todo.title;
+        descriptionInput.setAttribute('name', 'description');
+        descriptionInput.setAttribute('type', 'text');
+        descriptionInput.setAttribute('required', true);
+        descriptionInput.value = todo.description;
+        saveTodo.textContent = 'Save';
+
+        editForm.classList.add('none');
+        editForm.dataset.edittodo = true;
+        editForm.appendChild(titleInput);
+        editForm.appendChild(descriptionInput);
+        editForm.appendChild(saveTodo);
+        editForm.addEventListener('submit', saveHandler);
+
+        deleteTodo.textContent = 'Delete';
+        deleteTodo.addEventListener('click', deleteHandler);
+
+        editTodo.textContent = 'Edit';
+        editTodo.dataset.edit = true;
+
+        todoContentContainer.dataset.todoid = todo.id;
+        todoContentContainer.dataset.todocontent = true;
+        todoContentContainer.appendChild(todoTitle);
+        todoContentContainer.appendChild(todoDescription);
+
+        todoContainer.appendChild(todoId);
+        todoContainer.appendChild(editForm);
+        todoContainer.appendChild(todoContentContainer);
+        todoContainer.appendChild(editTodo);
+        todoContainer.appendChild(deleteTodo);
+        todoContainer.dataset.todoid = todo.id;
+
+        todos.prepend(todoContainer);
+      }
+
+      function addTodo({ title, description }) {
+        todoState.push({
+          title: title,
+          description: description,
+          id: globalId++,
+        });
+        updateState(todoState);
+      }
+    </script>
+    <script>
+      const form = document.getElementById('add-todo');
+      const getData = () => {
+        const formData = new FormData(form);
+        const title = formData.get('title');
+        const description = formData.get('description');
+        form.reset();
+        addTodo({ title, description });
+      };
+      const onSubmit = (e) => {
+        e.preventDefault();
+        getData();
+      };
+      form.addEventListener('submit', onSubmit);
+    </script>
+  </body>
 </html>

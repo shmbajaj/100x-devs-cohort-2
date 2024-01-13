@@ -11,17 +11,22 @@ export const Assignment3 = () => {
         // Add more items as needed
     ]);
 
-    // Your code starts here
-    const totalValue = 0;
-    // Your code ends here
-    return (
-        <div>
-            <ul>
-                {items.map((item, index) => (
-                    <li key={index}>{item.name} - Price: ${item.value}</li>
-                ))}
-            </ul>
-            <p>Total Value: {totalValue}</p>
-        </div>
-    );
+  // Your code starts here
+  const totalValue = useMemo(
+    () => items.reduce((a, e) => a + e.value, 0),
+    [items]
+  );
+  // Your code ends here
+  return (
+    <div>
+      <ul>
+        {items.map((item, index) => (
+          <li key={index}>
+            {item.name} - Price: ${item.value}
+          </li>
+        ))}
+      </ul>
+      <p>Total Value: {totalValue}</p>
+    </div>
+  );
 };
